@@ -4,7 +4,28 @@
 
 This is a [*namespace package*](https://packaging.python.org/en/latest/guides/packaging-namespace-packages/) for custom nodes and subgraphs for [maize](https://github.com/MolecularAI/maize). Place custom nodes in an appropriate subfolder under `maize/steps/`, following the provided template.
 
-Installation
+Auto Installation
+------------
+
+#### first time dev install (RECOMMENDED)
+```bash
+./devtools/INSTALL -a -g                 # Basic installation for developmental version
+```
+#### first time prod install
+```bash
+./devtools/INSTALL -t release -a -g                 # Basic installation for developmental version
+```
+
+```
+   Usage: $0 [-t <install_type>] [-a] [-g]"
+     -t    Installation type (release|dev) [default: dev]"
+     -a    Install AutoDockGPU & Vina tools [default: false]
+     -g    Install Gypsum-DL [default: false]
+     -h    Display this help message
+
+```
+
+Manual Installation
 ------------
 
 *Maize-contrib* bundles a recent version of the *maize* core. To install both *maize-contrib* and *maize*, simply clone this repository and run:
@@ -35,8 +56,7 @@ The first step will install maize (see the [maize documentation](https://molecul
 
 If you encounter `pip` errors regarding installing `maize` from git, remove that line from the `env.yml` file, create the environment again, and install `maize` manually. -->
 
-Usage
------
+# Usage
 
 For the basics of the *maize* workflow manager, consult the [**maize documentation**](https://molecularai.github.io/maize/index.html). To use nodes from this package, simply import the relevant steps from the subpackage:
 

@@ -1,0 +1,107 @@
+#!/bin/bash
+
+# Default values
+INSTALL_TYPE="dev"
+GET_AUTODOCK="false"
+INSTALL_GYPSUM="false"
+
+# Function to display usage information
+usage() {
+    echo "Usage: $0 [-t <install_type>] [-a] [-g]"
+    echo "Options:"
+    echo "  -t    Installation type (release|dev) [default: dev]"
+    echo "  -a    Install AutoDockGPU & Vina tools"
+    echo "  -g    Install Gypsum-DL"
+    echo "  -h    Display this help message"
+}
+
+get_vina() {
+    echo "Fetching Vina..."
+    wget https://vina.scripps.edu/wp-content/uploads/sites/55/2020/12/autodock_vina_1_1_2_linux_x86.tgz
+    echo "Unpacking Vina..."
+    tar -xvzf autodock_vina_1_1_2_linux_x86.tgz
+}
+
+get_autodockGPU() {
+    echo "Fetching AutodockGPU"
+    wget https://github.com/ccsb-scripps/AutoDock-GPU/releases/download/v1.6/adgpu-v1.6_linux_x64_cuda12_128wi
+}
+
+install_gypsum() {
+    conda create -c conda-forge --name gypsum_dl_env python=3.13 rdkit numpy scipy mpi4py -y
+    conda activate gypsum_dl_env
+    git clone https://github.com/durrantlab/gypsum_dl.git
+    cd gypsum_dl || exit
+    pip install ./
+    echo "--------------------TESTING GYPSUM--------------------"
+    gypsum-dl -h || { echo "INSTALLATION OF GYPSUM FAILED."; exit 1; }
+}
+
+# Parse command line arguments
+while getopts "t:agh" opt; do
+    case $opt in
+        t)
+            INSTALL_TYPE="$OPTARG"
+            if [[ "$INSTALL_TYPE" != "release" && "$INSTALL_TYPE" != "dev" ]]; then
+                echo "Error: Installation type must be 'release' or 'dev'"
+                exit 1
+            fi
+            ;;
+        a)
+            GET_AUTODOCK="true"
+            ;;
+        g)
+            INSTALL_GYPSUM="true"
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        \?)
+            echo "Invalid option: -$OPTARG"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+main() {
+    echo "Starting installation process..."
+    echo "Installation type: $INSTALL_TYPE"
+    echo "Install AutoDock: $GET_AUTODOCK"
+    echo "Install Gypsum: $INSTALL_GYPSUM"
+
+    # Create and activate conda environment based on installation type
+    if [[ "$INSTALL_TYPE" == "dev" ]]; then
+        echo "Installing development version..."
+        conda env create -f env-dev.yml
+        pip install -e ./
+    else
+        echo "Installing release version..."
+        conda env create -f env-users.yml
+        pip install --no-deps ./
+    fi
+
+    if [ $? -eq 0 ]; then
+        echo "Maize-contrib Installation done successfully!"
+        
+        # Install AutoDock tools if requested
+        if [[ "$GET_AUTODOCK" == "true" ]]; then
+            echo "Installing AutoDock tools..."
+            get_vina
+            get_autodockGPU
+        fi
+        
+        # Install Gypsum if requested
+        if [[ "$INSTALL_GYPSUM" == "true" ]]; then
+            echo "Installing Gypsum-DL..."
+            install_gypsum
+        fi
+    else
+        echo "Installation failed. Please check the error messages above."
+        exit 1
+    fi
+}
+
+# Execute main function
+main "$@"
