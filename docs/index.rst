@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-maize-contrib
+maimze-contrib
 =============
 *maize* is a graph-based workflow manager for computational chemistry pipelines. This repository contains namespace packages allowing domain-specific extensions and steps for *maize*. You can find the core maize documentation `here <https://molecularai.github.io/maize>`_.
 
