@@ -135,6 +135,7 @@ def _patch_config(
         "params": {
             "executable": "./intercept.py",
             "args": "",
+            "property":"predictions"
         },
         "transform": {
             "low": low,
