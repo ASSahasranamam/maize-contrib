@@ -14,3 +14,9 @@ test
 testing.ipynb
 deplicenses.txt
 build
+/.idea/developer-tools.xml
+/.idea/maize-contrib.iml
+/.idea/misc.xml
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/vcs.xml
