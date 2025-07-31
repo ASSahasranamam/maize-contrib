@@ -39,7 +39,7 @@ include = ["maize*"]
 "*" = ["../maize.toml"]
 
 [tool.pytest.ini_options]
-config = "test-config.toml"
+config = "devtools/test-config.toml"
 log_cli = true
 log_cli_level = "DEBUG"
 addopts = ["-vv"]
