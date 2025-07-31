@@ -19,15 +19,14 @@ commands.vina = "./autodock_vina_1_1_2_linux_x86/bin/vina"
 commands.vina = "./autodock_vina_1_1_2_linux_x86/bin/vina"
 
 [autodockgpu]
-python = "/home/{user}/anaconda3/envs/maize-dev/bin/python"
+python = "/home/adi_sahasranamam/miniconda3/envs/maize-dev/bin/python"
 modules = ["CUDA", "GCC"]
-commands.autodock_gpu = "/home/{user}/REINVENT4/adgpu-v1.6_linux_x64_cuda12_128wi"
+commands.autodock_gpu = "/home/adi_sahasranamam/REINVENT4/adgpu-v1.6_linux_x64_cuda12_128wi"
 
 [gypsum]
-scripts.gypsum.interpreter = "home/{user}/anaconda3/envs/gypsum_dl_env/bin/python"
-scripts.gypsum.location = "home/{user}/anaconda3/envs/gypsum_dl_env/bin/gypsum-dl"
-
+scripts.gypsum.interpreter = "/home/adi_sahasranamam/miniconda3/bin/conda run -n gypsum_dl_env python"
+scripts.gypsum.location = "/home/adi_sahasranamam/miniconda3/envs/gypsum_dl_env/bin/run-gypsum-dl"
 # Install Reinvent
 #[reinvent]
-#scripts.reinvent.interpreter = "/home/a/anaconda3/envs/reinvent4/bin/python"
-#scripts.reinvent.location = "/home/a/anaconda3/envs/reinvent4/bin/reinvent"
+#scripts.reinvent.interpreter = "/home/a/miniconda3/envs/reinvent4/bin/python"
+#scripts.reinvent.location = "/home/a/miniconda3/envs/reinvent4/bin/reinvent"

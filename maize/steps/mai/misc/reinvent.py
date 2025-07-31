@@ -126,6 +126,8 @@ def _patch_config(
     batch_size: int = 128,
     prior: Path | None = None,
     agent: Path | None = None,
+    args: str = "",
+    property: str = "predictions",
     maize_backend: bool = False,
 ) -> Path:
     """Patch the REINVENT config to allow interception of SMILES."""
@@ -134,8 +136,8 @@ def _patch_config(
         "weight": weight,
         "params": {
             "executable": "./intercept.py",
-            "args": "",
-            "property":"predictions"
+            "args": args,
+            "property":property
         },
         "transform": {
             "low": low,
@@ -521,6 +523,13 @@ class ReInvent(Node):
     reinvent_dotenv: FileParameter[Path] = FileParameter(optional=True)
     """Optional path to ReInvent dotenv file for setting ReInvent variables"""
 
+    args: Parameter[str] = Parameter(default="")
+    """Additional arguments to pass to ReInvent"""
+
+    property: Parameter[str] = Parameter(default="predictions")
+    """Additional arguments to pass to ReInvent"""
+
+
     def _handle_smiles(self, worker: RunningProcess) -> None:
         self.logger.debug("Waiting for SMILES from Reinvent")
         while not TEMP_SMILES_FILE.exists():
@@ -555,6 +564,8 @@ class ReInvent(Node):
             prior=prior,
             agent=agent,
             maize_backend=self.maize_backend.value,
+            args=self.args.value,
+            property=self.property.value
         )
 
         command = (
