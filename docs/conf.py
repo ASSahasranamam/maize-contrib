@@ -25,9 +25,9 @@ from maize.core.interface import Interface, Parameter, Input, Output
 
 sys.path.insert(0, os.path.abspath(".."))
 
-project = "maize-contrib"
-copyright = f"{time.localtime().tm_year}, Molecular AI Group"
-author = "Thomas Löhr"
+project = "maize-contrib-Higginson-lab"
+copyright = f"{time.localtime().tm_year}, Higginson Lab, MSKCC"
+author = "AS Sahasranamamr"
 release = "0.6.2"
 
 # -- General configuration ---------------------------------------------------
@@ -97,8 +97,10 @@ class MaizeNodeDocumenter(ModuleLevelDocumenter):
             and mem.object,
             "inputs": lambda mem: isinstance(mem.object, Input),
             "outputs": lambda mem: isinstance(mem.object, Output),
-            "parameters": lambda mem: isinstance(mem.object, Parameter) and mem.__name__ not in Node.get_parameters(),
-            "standard": lambda mem: isinstance(mem.object, Parameter) and mem.__name__ in Node.get_parameters(),
+            "parameters": lambda mem: isinstance(mem.object, Parameter)
+            and mem.__name__ not in Node.get_parameters(),
+            "standard": lambda mem: isinstance(mem.object, Parameter)
+            and mem.__name__ in Node.get_parameters(),
         }
         return members_check_module, [member for member in members if kinds[interface](member)]
 
@@ -212,8 +214,8 @@ _COLORS = {
     "platinum": "rgb(157,176,172)",
 }
 
-html_title = "maize contrib"
-html_logo = "maize-contrib-logo.svg"
+html_title = "maize Contrib-Higginson-Lab"
+html_logo = "Contrib-Higginson-Lab.png"
 html_theme = "furo"
 html_theme_options = {
     "sidebar_hide_name": True,
