@@ -1,5 +1,6 @@
 """GypsumDL prepares 3D small molecule conformers and isomers"""
-
+import subprocess
+import sys
 # pylint: disable=import-outside-toplevel, import-error
 
 from pathlib import Path
@@ -8,6 +9,7 @@ import pytest
 
 from maize.core.node import Node
 from maize.core.interface import Input, Output, Parameter, Flag
+from maize.core.runtime import Logger
 from maize.utilities.testing import TestRig
 from maize.utilities.validation import SuccessValidator
 from maize.utilities.resources import cpu_count
@@ -92,7 +94,7 @@ class Gypsum(Node):
             f"--job_manager multiprocessing --num_processors {self.n_jobs.value} "
         )
         if self.use_filters.value:
-            command += "--use_durrant_lab_filters"
+            command += " --use_durrant_lab_filters"
 
         # With our settings Gypsum produces one SDF file per SMILES,
         # each of which can have one or more isomers / conformers
@@ -105,10 +107,13 @@ class Gypsum(Node):
         )
 
         failed = set()
+        self.logger.warning("Gypsum return Output: %s", res.stdout)
+
         if res.returncode == 130:  # Timeout
             self.logger.warning("Timed out during embedding")
             failed = set(smiles)
         elif res.returncode > 0:
+            self.logger.error("Gypsum error code: %s", res.stderr)
             raise ProcessError("Gypsum failed for SMILES: %s", smiles)
 
         # Gypsum can fail to embed certain SMILES, but helpfully writes out those separately
@@ -155,12 +160,14 @@ class TestSuiteGypsum:
     def test_Gypsum(
         self, temp_working_dir: Path, test_config: Config, example_smiles: list[str]
     ) -> None:
-        rig = TestRig(Gypsum, config=test_config)
+        rig = TestRig(Gypsum, config=test_config )
+        print((rig))
         res = rig.setup_run(
             inputs={"inp": [example_smiles]},
-            parameters={"n_variants": 2},
+            parameters={"n_variants": 2, "use_filters":False},
         )
         mols = res["out"].get()
+        print(mols)
         assert mols is not None
         assert len(mols) == len(example_smiles)
         assert mols[0].molecules[0].n_conformers == 1
@@ -169,3 +176,43 @@ class TestSuiteGypsum:
         for mol in mols:
             assert mol.n_isomers <= 2
             assert not mol.scored
+
+    @pytest.mark.needs_node("gypsum")
+    def test_Gypsum_DL(self):
+
+        # path_smiles = os.path.join(test_dir, "files/sample/sample_molecules.smi")
+        # output_folder = os.path.join(test_dir, "tmp/sample")
+
+        smiles = [smi.strip() for smi in  ['Nc1ncnc(c12)n(CCCC#C)c(n2)Cc3cc(OC)c(OC)c(c3Cl)OC', 'Nc1nc(F)nc(c12)n(CCCC#C)c(n2)Cc3cc(OC)c(OC)c(c3Cl)OC', 'Nc1ncnc(c12)n(CCCC)c(n2)Cc3ccc(OC)cc3', 'CC(C)NCCCn(c(c12)nc(F)nc2N)c(n1)Cc(c3)c(I)cc(c34)OCO4', 'O1COc(c12)cc(Br)c(c2)Cc(nc(n34)c(N)ncc3)c4NCc5ccccc5']]
+        smiles_path = Path("./input.smi")
+        save_smiles(smiles_path, smiles)
+        command = f"conda run -n gypsum_dl_env run-gypsum-dl --source /home/adi_sahasranamam/maize-contrib/maize/steps/mai/molecule/input.smi --max_variants_per_compound 2 --thoroughness 3 --separate_output_files --min_ph 6.4 --max_ph 8.4 --job_manager multiprocessing --num_processors 5 "
+        subprocess.run("conda run -n gypsum_dl_env /home/adi_sahasranamam/miniconda3/envs/gypsum_dl_env/bin/run-gypsum-dl --source input.smi --max_variants_per_compound 4 --thoroughness 3 --separate_output_files --min_ph 6.4 --max_ph 8.4 --job_manager multiprocessing --num_processors 4",  shell=True)
+        # process = subprocess.Popen(
+        #     command, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        # )
+        #
+        # while True:
+        #     out = process.stdout.read(1)
+        #     if out == '' and process.poll() != None:
+        #         break
+        #     if out != '':
+        #         sys.stdout.write(out)
+        #         sys.stdout.flush()
+        #
+
+        # rig = TestRig(Gypsum, config=test_config)
+        # res = rig.setup_run(
+        #     inputs={"inp": [example_smiles]},
+        #     parameters={"n_variants": 2},
+        # )
+        # mols = res["out"].get()
+        # assert mols is not None
+        # assert len(mols) == len(example_smiles)
+        # assert mols[0].molecules[0].n_conformers == 1
+        # assert mols[0].molecules[0].charge <= 2
+        # assert 51 <= mols[0].molecules[0].n_atoms <= 53
+        # for mol in mols:
+        #     assert mol.n_isomers <= 2
+        #     assert not mol.scored
+        #
