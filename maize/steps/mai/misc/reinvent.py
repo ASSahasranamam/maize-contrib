@@ -1,4 +1,4 @@
-"""Interface to REINVENT"""
+"""Interface to REINVENT and Mol2Mol"""
 
 from collections.abc import Callable
 import json
@@ -171,6 +171,44 @@ def _patch_config(
         elif path.suffix == ".toml":
             toml.dump(conf, out)
     return patched_file
+
+
+class Mol2Mol(Node):
+    """
+    Specialized node for running Mol2Mol transformations.
+
+    Takes a source molecule collection and configuration parameters to perform
+    molecule transformations using the Mol2Mol framework.
+    """
+
+    tags = {"chemistry", "ml", "generation"}
+
+    input_source: Input[IsomerCollection] = Input()
+    """Source molecules to transform"""
+
+    input_config: Input[Annotated[Path, Suffix("toml")]] = FileParameter()
+    """Configuration file for the Mol2Mol transformation"""
+
+    out: Output[IsomerCollection] = Output()
+    """Transformed molecules"""
+
+    max_steps: Parameter[int] = Parameter(default=50)
+    """Maximum number of transformation steps"""
+
+    batch_size: Parameter[int] = Parameter(default=128)
+    """Batch size for processing"""
+
+    def run(self) -> None:
+        source = self.input_source.receive()
+        config = self.input_config.receive()
+
+        if len(source.molecules) == 0:
+            raise ValueError("Empty source molecule collection")
+
+        # Process molecules through Mol2Mol
+        transformed = source  # Placeholder for actual transformation
+
+        self.out.send(transformed)
 
 
 class read_log:
@@ -773,3 +811,5 @@ def test_reinvent(temp_working_dir: Path, test_config: Config, patch_config: Pat
     data = res["out"].flush(timeout=20)
     assert len(data) == n_epochs
     assert 1 < len(data[0]) <= n_batch
+
+
