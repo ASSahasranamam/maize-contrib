@@ -24,9 +24,9 @@ modules = ["CUDA", "GCC"]
 commands.autodock_gpu = "/home/adi_sahasranamam/REINVENT4/adgpu-v1.6_linux_x64_cuda12_128wi"
 
 [gypsum]
-scripts.gypsum.interpreter = "/home/adi_sahasranamam/miniconda3/bin/conda run -n gypsum_dl_env python"
-scripts.gypsum.location = "/home/adi_sahasranamam/miniconda3/envs/gypsum_dl_env/bin/run-gypsum-dl"
-# Install Reinvent
-#[reinvent]
-#scripts.reinvent.interpreter = "/home/a/miniconda3/envs/reinvent4/bin/python"
-#scripts.reinvent.location = "/home/a/miniconda3/envs/reinvent4/bin/reinvent"
+scripts.gypsum.interpreter = "home/adi_sahasranamam/miniconda3/envs/gypsum_dl_env/bin/conda run -n gypsum_dl_env python"
+scripts.gypsum.location = "home/adi_sahasranamam/miniconda3/envs/gypsum_dl_env/bin/run-gypsum-dl"
+
+[reinvent]
+scripts.reinvent.interpreter = "/home/adi_sahasranamam/miniconda3/envs/reinvent4/bin/python"
+scripts.reinvent.location = "/home/adi_sahasranamam/miniconda3/envs/reinvent4/bin/reinvent"

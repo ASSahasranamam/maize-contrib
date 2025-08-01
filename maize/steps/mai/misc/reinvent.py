@@ -1,4 +1,4 @@
-"""Interface to REINVENT"""
+"""Interface to REINVENT and Mol2Mol"""
 
 from collections.abc import Callable
 import json
@@ -126,9 +126,10 @@ def _patch_config(
     batch_size: int = 128,
     prior: Path | None = None,
     agent: Path | None = None,
-    args: str = "",
-    property: str = "predictions",
     maize_backend: bool = False,
+    input_smi: Path | None = None,
+    sample_strategy: str | None = None,
+    distance_threshold: int | None = None,
 ) -> Path:
     """Patch the REINVENT config to allow interception of SMILES."""
     score_conf = {
@@ -136,8 +137,8 @@ def _patch_config(
         "weight": weight,
         "params": {
             "executable": "./intercept.py",
-            "args": args,
-            "property":property
+            "args": "",
+            "property":"predictions"
         },
         "transform": {
             "low": low,
@@ -159,10 +160,25 @@ def _patch_config(
     conf["stage"][0]["max_steps"] = max_epochs
     conf["parameters"]["batch_size"] = batch_size
 
+
+    # prior_file = "priors/mol2mol_scaffold_generic.prior"
+    # agent_file = "priors/mol2mol_scaffold_generic.prior"
+    # smiles_file = "mol2mol.smi"  # 1 compound per line
+    # sample_strategy = "multinomial"  # multinomial or beamsearch (deterministic)
+    # distance_threshold = 100
+
+    # dictionary for Model data
     if prior is not None:
         conf["parameters"]["prior_file"] = prior.absolute().as_posix()
     if agent is not None:
         conf["parameters"]["agent_file"] = agent.absolute().as_posix()
+    if input_smi is not None:
+        conf["parameters"]["smiles_file"] = input_smi.absolute().as_posix()
+    if sample_strategy is not None:
+        conf["parameters"]["sample_strategy"] = sample_strategy
+    if distance_threshold is not None:
+        conf["parameters"]["distance_threshold"] = distance_threshold
+    # if agent is not None:
 
     patched_file = DEFAULT_PATCHED_CONFIG.with_suffix(path.suffix)
     with patched_file.open("w") as out:
@@ -171,6 +187,44 @@ def _patch_config(
         elif path.suffix == ".toml":
             toml.dump(conf, out)
     return patched_file
+
+
+class Mol2Mol(Node):
+    """
+    Specialized node for running Mol2Mol transformations.
+
+    Takes a source molecule collection and configuration parameters to perform
+    molecule transformations using the Mol2Mol framework.
+    """
+
+    tags = {"chemistry", "ml", "generation"}
+
+    input_source: Input[IsomerCollection] = Input()
+    """Source molecules to transform"""
+
+    input_config: Input[Annotated[Path, Suffix("toml")]] = FileParameter()
+    """Configuration file for the Mol2Mol transformation"""
+
+    out: Output[IsomerCollection] = Output()
+    """Transformed molecules"""
+
+    max_steps: Parameter[int] = Parameter(default=50)
+    """Maximum number of transformation steps"""
+
+    batch_size: Parameter[int] = Parameter(default=128)
+    """Batch size for processing"""
+
+    def run(self) -> None:
+        source = self.input_source.receive()
+        config = self.input_config.receive()
+
+        if len(source.molecules) == 0:
+            raise ValueError("Empty source molecule collection")
+
+        # Process molecules through Mol2Mol
+        transformed = source  # Placeholder for actual transformation
+
+        self.out.send(transformed)
 
 
 class read_log:
@@ -523,12 +577,14 @@ class ReInvent(Node):
     reinvent_dotenv: FileParameter[Path] = FileParameter(optional=True)
     """Optional path to ReInvent dotenv file for setting ReInvent variables"""
 
-    args: Parameter[str] = Parameter(default="")
-    """Additional arguments to pass to ReInvent"""
+    input_smi: FileParameter[Path] = FileParameter(optional=True)
+    """Input SMILES file path for Mol2Mol/"""
 
-    property: Parameter[str] = Parameter(default="predictions")
-    """Additional arguments to pass to ReInvent"""
+    sample_strategy: Parameter[str] = Parameter(optional=True)
+    """Sample strategy to use (multinomial or beamsearch)"""
 
+    distance_threshold: Parameter[int] = Parameter(optional=True)
+    """Distance threshold parameter"""
 
     def _handle_smiles(self, worker: RunningProcess) -> None:
         self.logger.debug("Waiting for SMILES from Reinvent")
@@ -550,23 +606,16 @@ class ReInvent(Node):
 
         prior = self.prior.filepath if self.prior.is_set else None
         agent = self.agent.filepath if self.agent.is_set else None
+        input_smi = self.input_smi.filepath if self.input_smi.is_set else None
+        distance_threshold = self.distance_threshold.value if self.agent.is_set else None
+        sample_strategy = self.sample_strategy.value if self.sample_strategy.is_set else None
 
-        config = _patch_config(
-            self.configuration.filepath,
-            weight=self.weight.value,
-            low=self.low.value,
-            high=self.high.value,
-            k=self.k.value,
-            reverse=self.reverse.value,
-            min_epochs=self.min_epoch.value,
-            max_epochs=self.max_epoch.value,
-            batch_size=self.batch_size.value,
-            prior=prior,
-            agent=agent,
-            maize_backend=self.maize_backend.value,
-            args=self.args.value,
-            property=self.property.value
-        )
+        config = _patch_config(self.configuration.filepath, weight=self.weight.value, low=self.low.value,
+                               high=self.high.value, k=self.k.value, reverse=self.reverse.value,
+                               min_epochs=self.min_epoch.value, max_epochs=self.max_epoch.value,
+                               batch_size=self.batch_size.value, prior=prior, agent=agent,
+                               maize_backend=self.maize_backend.value, input_smi=input_smi,
+                               distance_threshold=distance_threshold, sample_strategy=sample_strategy)
 
         command = (
             f"{self.runnable['reinvent']} "
@@ -768,6 +817,55 @@ def test_reinvent(temp_working_dir: Path, test_config: Config, patch_config: Pat
         "min_epoch": 3,
         "max_epoch": n_epochs,
         "batch_size": n_batch,
+    }
+    res = rig.setup_run(parameters=params, inputs={"inp": scores})
+    data = res["out"].flush(timeout=20)
+    assert len(data) == n_epochs
+    assert 1 < len(data[0]) <= n_batch
+
+@pytest.fixture
+def mol2mol_config(shared_datadir: Path) -> Path:
+    return shared_datadir / "input-intercept-mol2mol.toml"
+
+
+@pytest.fixture
+def mol2mol_prior(shared_datadir: Path) -> Path:
+    return Path("/home/adi_sahasranamam/workspace/reinventstudies/priors/mol2mol_similarity.prior")
+
+
+@pytest.fixture
+def mol2mol_agent(shared_datadir: Path) -> Path:
+    return Path("/home/adi_sahasranamam/workspace/reinventstudies/priors/mol2mol_similarity.prior")
+
+@pytest.fixture
+def mol2mol_patch_config(mol2mol_prior: Path, mol2mol_agent: Path, mol2mol_config: Path, tmp_path: Path) -> Path:
+    with mol2mol_config.open() as conf:
+        data = toml.load(conf)
+    data["parameters"]["prior_file"] = mol2mol_prior.absolute().as_posix()
+    data["parameters"]["agent_file"] = mol2mol_agent.absolute().as_posix()
+    new_config_file = tmp_path / "conf.toml"
+    with new_config_file.open("w") as conf:
+        toml.dump(data, conf)
+    return new_config_file
+
+#TODO: FIX THIS
+@pytest.mark.needs_node("reinvent")
+def test_reinvent_mol2mol(temp_working_dir: Path, test_config: Config, mol2mol_patch_config: Path) -> None:
+    n_epochs, n_batch = 5, 8
+    sample_strategy = "multinomial"
+    distance_threshold=100
+
+
+    scores = [np.random.rand(n_batch) for _ in range(n_epochs)]
+    rig = TestRig(ReInvent, config=test_config)
+    params = {
+        "configuration": mol2mol_patch_config,
+        "min_epoch": 3,
+        "max_epoch": n_epochs,
+        "batch_size": n_batch,
+        "sample_strategy": sample_strategy,
+        "distance_threshold": distance_threshold,
+        "input_smi": Path("/home/adi_sahasranamam/workspace/reinventstudies/mols/Rad51/cam833.smi")
     }
     res = rig.setup_run(parameters=params, inputs={"inp": scores})
     data = res["out"].flush(timeout=20)

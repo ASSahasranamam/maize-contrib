@@ -49,8 +49,12 @@ Installation
 ------------
 Due to current issues with installing dependencies from internal GitHub repositories, *maize-contrib* currently bundles a recent version of the *maize* core. To install, simply clone this repository and run:
 
+Automatic Installation with script
 .. code-block:: bash
+   ./devtools/INSTALL -t release -a -g                 # Basic installation for developmental version
 
+or manually with
+.. code-block:: bash
    conda env create -f env-users.yml
    conda activate maize
    pip install --no-deps ./
@@ -62,6 +66,13 @@ If you want to keep up-to-date with the latest changes to the core, clone `maize
    pip install --no-deps ./
 
 If you plan on developing, you should use ``env-dev.yml`` instead and use the ``-e`` flag for ``pip``. If you encounter slow installs or dependency resolution, consider using `mamba <https://github.com/mamba-org/mamba>`_ as a drop-in ``conda`` replacement.
+
+.. code-block:: bash
+
+   ./devtools/INSTALL  -a -g # Basic installation for developmental version
+
+
+
 
 Configuration
 -------------
