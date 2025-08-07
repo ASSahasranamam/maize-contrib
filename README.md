@@ -1,6 +1,6 @@
 ![Maturity level-1](https://img.shields.io/badge/Maturity%20Level-ML--1-yellow)
 
-<img src="docs/Contrib-Higginson-Lab.png" width="500" alt="logo">
+<img src="docs/maize-contrib-logo.svg" width="500" alt="logo">
 
 This is a [*namespace package*](https://packaging.python.org/en/latest/guides/packaging-namespace-packages/) for custom nodes and subgraphs for [maize](https://github.com/MolecularAI/maize). Place custom nodes in an appropriate subfolder under `maize/steps/`, following the provided template.
 
