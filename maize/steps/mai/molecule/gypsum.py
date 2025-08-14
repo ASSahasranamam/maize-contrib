@@ -183,7 +183,7 @@ class TestSuiteGypsum:
         # path_smiles = os.path.join(test_dir, "files/sample/sample_molecules.smi")
         # output_folder = os.path.join(test_dir, "tmp/sample")
 
-        smiles = [smi.strip() for smi in  ['Nc1ncnc(c12)n(CCCC#C)c(n2)Cc3cc(OC)c(OC)c(c3Cl)OC', 'Nc1nc(F)nc(c12)n(CCCC#C)c(n2)Cc3cc(OC)c(OC)c(c3Cl)OC', 'Nc1ncnc(c12)n(CCCC)c(n2)Cc3ccc(OC)cc3', 'CC(C)NCCCn(c(c12)nc(F)nc2N)c(n1)Cc(c3)c(I)cc(c34)OCO4', 'O1COc(c12)cc(Br)c(c2)Cc(nc(n34)c(N)ncc3)c4NCc5ccccc5']]
+        smiles = [smi.strip() for smi in  ['CC(C)C(NC(=O)[C@@H]1C[C@@H](O)CN1C(=O)CNC(=O)c1ccc2cc(F)ccc2n1)c1ccccc1', 'CC(C)C[C@H](NC(=O)[C@@H]1C[C@@H](O)CN1C(=O)CNC(=O)c1ccc2cc(F)ccc2n1)c1ccccc1', 'Nc1ncnc(c12)n(CCCC)c(n2)Cc3ccc(OC)cc3', 'CC(C)NCCCn(c(c12)nc(F)nc2N)c(n1)Cc(c3)c(I)cc(c34)OCO4', 'O1COc(c12)cc(Br)c(c2)Cc(nc(n34)c(N)ncc3)c4NCc5ccccc5']]
         smiles_path = Path("./input.smi")
         save_smiles(smiles_path, smiles)
         command = f"conda run -n gypsum_dl_env run-gypsum-dl --source /home/adi_sahasranamam/maize-contrib/maize/steps/mai/molecule/input.smi --max_variants_per_compound 2 --thoroughness 3 --separate_output_files --min_ph 6.4 --max_ph 8.4 --job_manager multiprocessing --num_processors 5 "
