@@ -155,9 +155,9 @@ def _patch_config(
         else:
             raise IOError(f"Unable to read REINVENT config '{path.as_posix()}'")
 
-    conf["stage"][0]["scoring"]["component"].append({"ExternalProcess": {"endpoint": [score_conf]}})
-    conf["stage"][0]["min_steps"] = min_epochs
-    conf["stage"][0]["max_steps"] = max_epochs
+    conf["stage"][-1]["scoring"]["component"].append({"ExternalProcess": {"endpoint": [score_conf]}})
+    conf["stage"][-1]["min_steps"] = min_epochs
+    conf["stage"][-1]["max_steps"] = max_epochs
     conf["parameters"]["batch_size"] = batch_size
 
 
@@ -607,7 +607,7 @@ class ReInvent(Node):
         prior = self.prior.filepath if self.prior.is_set else None
         agent = self.agent.filepath if self.agent.is_set else None
         input_smi = self.input_smi.filepath if self.input_smi.is_set else None
-        distance_threshold = self.distance_threshold.value if self.agent.is_set else None
+        distance_threshold = self.distance_threshold.value if self.distance_threshold.is_set else None
         sample_strategy = self.sample_strategy.value if self.sample_strategy.is_set else None
 
         config = _patch_config(self.configuration.filepath, weight=self.weight.value, low=self.low.value,

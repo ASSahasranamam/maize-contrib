@@ -75,7 +75,7 @@ class DockGPU(Graph):
         self.inp = self.map_port(gyp.inp)
         self.out = self.map_port(adg.out_scores)
 
-
+@expose_reinvent
 class Docking(Graph):
     """Dock a molecule in the form of a SMILES string to a protein."""
 
@@ -195,7 +195,7 @@ def dock_glide() -> Workflow:
     )
     return flow
 
-
+#TODO: Fix flex receptor
 @expose
 def prepare_pdbqt() -> Workflow:
     """Prepares a PDBQT file for Vina from a PDB file"""
@@ -203,13 +203,18 @@ def prepare_pdbqt() -> Workflow:
     load_protein = flow.add(LoadFile[Annotated[Path, Suffix("pdb")]], name="protein")
     prep = flow.add(PreparePDBQT)
     save = flow.add(SaveFile[Annotated[Path, Suffix("pdbqt")]])
+    # save2 = flow.add(SaveFile[Annotated[Path, Suffix("pdbqt")]],name="save2")
 
     flow.connect(load_protein.out, prep.inp)
     flow.connect(prep.out, save.inp)
+    # flow.connect(prep.out_flex, save2.inp)
 
     save.overwrite.set(True)
     flow.combine_parameters(load_protein.file, name="protein")
     flow.combine_parameters(save.destination, name="output")
+    # flow.combine_parameters(save2.destination, name="flex_output")
+
+
     flow.map(prep.repairs, prep.cleanup_protein, prep.preserve_charges, prep.remove_nonstd)
     return flow
 
