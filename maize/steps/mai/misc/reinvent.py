@@ -751,6 +751,8 @@ class ReinventExit(Node):
         mols = self.inp.receive()
         self.logger.debug("Received %s mols", len(mols))
 
+
+
         names = [mol.name for mol in mols]
 
         # Add per-mol relevances if we have them
